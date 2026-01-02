@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.HospitalDepartmentMapper">
+    
+    <resultMap type="HospitalDepartment" id="HospitalDepartmentResult">
+        <result property="deptId"    column="dept_id"    />
+        <result property="deptName"    column="dept_name"    />
+        <result property="deptCode"    column="dept_code"    />
+        <result property="deptIntro"    column="dept_intro"    />
+        <result property="deptLocation"    column="dept_location"    />
+        <result property="leader"    column="leader"    />
+        <result property="phone"    column="phone"    />
+        <result property="status"    column="status"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectHospitalDepartmentVo">
+        select dept_id, dept_name, dept_code, dept_intro, dept_location, leader, phone, status, create_by, create_time, update_by, update_time, remark from hospital_department
+    </sql>
+
+    <select id="selectHospitalDepartmentList" parameterType="HospitalDepartment" resultMap="HospitalDepartmentResult">
+        <include refid="selectHospitalDepartmentVo"/>
+        <where>  
+            <if test="deptName != null  and deptName != ''"> and dept_name like concat('%', #{deptName}, '%')</if>
+            <if test="deptCode != null  and deptCode != ''"> and dept_code = #{deptCode}</if>
+            <if test="deptIntro != null  and deptIntro != ''"> and dept_intro = #{deptIntro}</if>
+            <if test="deptLocation != null  and deptLocation != ''"> and dept_location = #{deptLocation}</if>
+            <if test="leader != null  and leader != ''"> and leader = #{leader}</if>
+            <if test="phone != null  and phone != ''"> and phone = #{phone}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+        </where>
+    </select>
+    
+    <select id="selectHospitalDepartmentByDeptId" parameterType="Long" resultMap="HospitalDepartmentResult">
+        <include refid="selectHospitalDepartmentVo"/>
+        where dept_id = #{deptId}
+    </select>
+
+    <insert id="insertHospitalDepartment" parameterType="HospitalDepartment" useGeneratedKeys="true" keyProperty="deptId">
+        insert into hospital_department
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="deptName != null and deptName != ''">dept_name,</if>
+            <if test="deptCode != null">dept_code,</if>
+            <if test="deptIntro != null">dept_intro,</if>
+            <if test="deptLocation != null">dept_location,</if>
+            <if test="leader != null">leader,</if>
+            <if test="phone != null">phone,</if>
+            <if test="status != null">status,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="deptName != null and deptName != ''">#{deptName},</if>
+            <if test="deptCode != null">#{deptCode},</if>
+            <if test="deptIntro != null">#{deptIntro},</if>
+            <if test="deptLocation != null">#{deptLocation},</if>
+            <if test="leader != null">#{leader},</if>
+            <if test="phone != null">#{phone},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateHospitalDepartment" parameterType="HospitalDepartment">
+        update hospital_department
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="deptName != null and deptName != ''">dept_name = #{deptName},</if>
+            <if test="deptCode != null">dept_code = #{deptCode},</if>
+            <if test="deptIntro != null">dept_intro = #{deptIntro},</if>
+            <if test="deptLocation != null">dept_location = #{deptLocation},</if>
+            <if test="leader != null">leader = #{leader},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where dept_id = #{deptId}
+    </update>
+
+    <delete id="deleteHospitalDepartmentByDeptId" parameterType="Long">
+        delete from hospital_department where dept_id = #{deptId}
+    </delete>
+
+    <delete id="deleteHospitalDepartmentByDeptIds" parameterType="String">
+        delete from hospital_department where dept_id in 
+        <foreach item="deptId" collection="array" open="(" separator="," close=")">
+            #{deptId}
+        </foreach>
+    </delete>
+</mapper>

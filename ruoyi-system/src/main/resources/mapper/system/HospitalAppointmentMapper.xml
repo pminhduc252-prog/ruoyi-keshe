@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.HospitalAppointmentMapper">
+    
+    <resultMap type="HospitalAppointment" id="HospitalAppointmentResult">
+        <result property="appointmentId"    column="appointment_id"    />
+        <result property="patientId"    column="patient_id"    />
+        <result property="doctorId"    column="doctor_id"    />
+        <result property="scheduleId"    column="schedule_id"    />
+        <result property="visitDate"    column="visit_date"    />
+        <result property="shiftType"    column="shift_type"    />
+        <result property="queueNumber"    column="queue_number"    />
+        <result property="status"    column="status"    />
+        <result property="visitStatus"    column="visit_status"    />
+        <result property="regFee"    column="reg_fee"    />
+        <result property="symptomDesc"    column="symptom_desc"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectHospitalAppointmentVo">
+        select appointment_id, patient_id, doctor_id, schedule_id, visit_date, shift_type, queue_number, status, visit_status, reg_fee, symptom_desc, create_by, create_time, update_by, update_time, remark from hospital_appointment
+    </sql>
+
+    <select id="selectHospitalAppointmentList" parameterType="HospitalAppointment" resultMap="HospitalAppointmentResult">
+        <include refid="selectHospitalAppointmentVo"/>
+        <where>  
+            <if test="patientId != null "> and patient_id = #{patientId}</if>
+            <if test="doctorId != null "> and doctor_id = #{doctorId}</if>
+            <if test="scheduleId != null "> and schedule_id = #{scheduleId}</if>
+            <if test="visitDate != null "> and visit_date = #{visitDate}</if>
+            <if test="shiftType != null  and shiftType != ''"> and shift_type = #{shiftType}</if>
+            <if test="queueNumber != null "> and queue_number = #{queueNumber}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+            <if test="visitStatus != null  and visitStatus != ''"> and visit_status = #{visitStatus}</if>
+            <if test="regFee != null "> and reg_fee = #{regFee}</if>
+            <if test="symptomDesc != null  and symptomDesc != ''"> and symptom_desc = #{symptomDesc}</if>
+        </where>
+    </select>
+    
+    <select id="selectHospitalAppointmentByAppointmentId" parameterType="Long" resultMap="HospitalAppointmentResult">
+        <include refid="selectHospitalAppointmentVo"/>
+        where appointment_id = #{appointmentId}
+    </select>
+
+    <insert id="insertHospitalAppointment" parameterType="HospitalAppointment" useGeneratedKeys="true" keyProperty="appointmentId">
+        insert into hospital_appointment
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="patientId != null">patient_id,</if>
+            <if test="doctorId != null">doctor_id,</if>
+            <if test="scheduleId != null">schedule_id,</if>
+            <if test="visitDate != null">visit_date,</if>
+            <if test="shiftType != null">shift_type,</if>
+            <if test="queueNumber != null">queue_number,</if>
+            <if test="status != null">status,</if>
+            <if test="visitStatus != null">visit_status,</if>
+            <if test="regFee != null">reg_fee,</if>
+            <if test="symptomDesc != null">symptom_desc,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="patientId != null">#{patientId},</if>
+            <if test="doctorId != null">#{doctorId},</if>
+            <if test="scheduleId != null">#{scheduleId},</if>
+            <if test="visitDate != null">#{visitDate},</if>
+            <if test="shiftType != null">#{shiftType},</if>
+            <if test="queueNumber != null">#{queueNumber},</if>
+            <if test="status != null">#{status},</if>
+            <if test="visitStatus != null">#{visitStatus},</if>
+            <if test="regFee != null">#{regFee},</if>
+            <if test="symptomDesc != null">#{symptomDesc},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateHospitalAppointment" parameterType="HospitalAppointment">
+        update hospital_appointment
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="patientId != null">patient_id = #{patientId},</if>
+            <if test="doctorId != null">doctor_id = #{doctorId},</if>
+            <if test="scheduleId != null">schedule_id = #{scheduleId},</if>
+            <if test="visitDate != null">visit_date = #{visitDate},</if>
+            <if test="shiftType != null">shift_type = #{shiftType},</if>
+            <if test="queueNumber != null">queue_number = #{queueNumber},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="visitStatus != null">visit_status = #{visitStatus},</if>
+            <if test="regFee != null">reg_fee = #{regFee},</if>
+            <if test="symptomDesc != null">symptom_desc = #{symptomDesc},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where appointment_id = #{appointmentId}
+    </update>
+
+    <delete id="deleteHospitalAppointmentByAppointmentId" parameterType="Long">
+        delete from hospital_appointment where appointment_id = #{appointmentId}
+    </delete>
+
+    <delete id="deleteHospitalAppointmentByAppointmentIds" parameterType="String">
+        delete from hospital_appointment where appointment_id in 
+        <foreach item="appointmentId" collection="array" open="(" separator="," close=")">
+            #{appointmentId}
+        </foreach>
+    </delete>
+</mapper>
