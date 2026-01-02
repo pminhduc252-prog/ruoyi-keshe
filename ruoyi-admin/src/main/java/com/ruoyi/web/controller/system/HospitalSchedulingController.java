@@ -37,7 +37,7 @@ public class HospitalSchedulingController extends BaseController
     /**
      * 查询医生排班列表
      */
-    @PreAuthorize("@ss.hasPermi('system:schedulingKeshe:list')")
+    @PreAuthorize("@ss.hasPermi('system:schedulingKeshe:list') || @ss.hasRole('patient')")
     @GetMapping("/list")
     public TableDataInfo list(HospitalScheduling hospitalScheduling)
     {
