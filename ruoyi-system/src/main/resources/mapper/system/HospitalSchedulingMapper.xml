@@ -7,6 +7,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <resultMap type="HospitalScheduling" id="HospitalSchedulingResult">
         <result property="scheduleId"    column="schedule_id"    />
         <result property="doctorId"    column="doctor_id"    />
+        <result property="doctorName"    column="doctor_name"    /> 
         <result property="workDate"    column="work_date"    />
         <result property="shiftType"    column="shift_type"    />
         <result property="totalQuota"    column="total_quota"    />
@@ -20,13 +21,29 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectHospitalSchedulingVo">
-        select schedule_id, doctor_id, work_date, shift_type, total_quota, available_quota, status, create_by, create_time, update_by, update_time, remark from hospital_scheduling
+        SELECT 
+            s.schedule_id, 
+            s.doctor_id, 
+            d.doc_name AS doctor_name,  /* 关联查询医生姓名 */
+            s.work_date, 
+            s.shift_type, 
+            s.total_quota, 
+            s.available_quota, 
+            s.status, 
+            s.create_by, 
+            s.create_time, 
+            s.update_by, 
+            s.update_time, 
+            s.remark 
+        FROM hospital_scheduling s
+        LEFT JOIN hospital_doctor d ON s.doctor_id = d.doctor_id
     </sql>
 
     <select id="selectHospitalSchedulingList" parameterType="HospitalScheduling" resultMap="HospitalSchedulingResult">
         <include refid="selectHospitalSchedulingVo"/>
         <where>  
             <if test="doctorId != null "> and doctor_id = #{doctorId}</if>
+            <if test="doctorName != null and doctorName != ''"> and d.doc_name like concat('%', #{doctorName}, '%')</if>
             <if test="workDate != null "> and work_date = #{workDate}</if>
             <if test="shiftType != null  and shiftType != ''"> and shift_type = #{shiftType}</if>
             <if test="totalQuota != null "> and total_quota = #{totalQuota}</if>

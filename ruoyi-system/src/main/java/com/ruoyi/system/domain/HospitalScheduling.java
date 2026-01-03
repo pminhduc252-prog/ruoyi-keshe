@@ -9,8 +9,7 @@ import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
  * 医生排班对象 hospital_scheduling
- * 
- * @author Shuhan
+ * * @author Shuhan
  * @date 2026-01-02
  */
 public class HospitalScheduling extends BaseEntity
@@ -23,6 +22,10 @@ public class HospitalScheduling extends BaseEntity
     /** 医生ID */
     @Excel(name = "医生ID")
     private Long doctorId;
+
+    /** 医生姓名 (新增字段，用于展示) */
+    @Excel(name = "医生姓名")
+    private String doctorName;
 
     /** 出诊日期 */
     @JsonFormat(pattern = "yyyy-MM-dd")
@@ -63,6 +66,16 @@ public class HospitalScheduling extends BaseEntity
     public Long getDoctorId() 
     {
         return doctorId;
+    }
+
+    public void setDoctorName(String doctorName) 
+    {
+        this.doctorName = doctorName;
+    }
+
+    public String getDoctorName() 
+    {
+        return doctorName;
     }
 
     public void setWorkDate(Date workDate) 
@@ -120,6 +133,7 @@ public class HospitalScheduling extends BaseEntity
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
             .append("scheduleId", getScheduleId())
             .append("doctorId", getDoctorId())
+            .append("doctorName", getDoctorName())
             .append("workDate", getWorkDate())
             .append("shiftType", getShiftType())
             .append("totalQuota", getTotalQuota())
