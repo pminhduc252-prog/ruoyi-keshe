@@ -10,8 +10,7 @@ import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
  * 挂号预约记录对象 hospital_appointment
- * 
- * @author Shuhan
+ * * @author Shuhan
  * @date 2026-01-02
  */
 public class HospitalAppointment extends BaseEntity
@@ -42,25 +41,57 @@ public class HospitalAppointment extends BaseEntity
     @Excel(name = "就诊时段")
     private String shiftType;
 
-    /** 排队序号(叫号用) */
-    @Excel(name = "排队序号(叫号用)")
+    /** 排队号 */
+    @Excel(name = "排队号")
     private Long queueNumber;
 
-    /** 状态（0待就诊 1已就诊 2已取消 3已过期） */
-    @Excel(name = "状态", readConverterExp = "0=待就诊,1=已就诊,2=已取消,3=已过期")
+    /** 状态（0已预约 1已取消 2已完成 3已爽约） */
+    @Excel(name = "状态", readConverterExp = "0=已预约,1=已取消,2=已完成,3=已爽约")
     private String status;
 
-    /** 叫号状态（0未叫号 1候诊中 2正在就诊 3完成） */
-    @Excel(name = "叫号状态", readConverterExp = "0=未叫号,1=候诊中,2=正在就诊,3=完成")
+    /** 就诊状态（0未就诊 1就诊中 2已就诊） */
+    @Excel(name = "就诊状态", readConverterExp = "0=未就诊,1=就诊中,2=已就诊")
     private String visitStatus;
 
-    /** 挂号费用 */
-    @Excel(name = "挂号费用")
+    /** 挂号费 */
+    @Excel(name = "挂号费")
     private BigDecimal regFee;
 
-    /** 就诊需求/症状描述 */
-    @Excel(name = "就诊需求/症状描述")
+    /** 病情描述 */
+    @Excel(name = "病情描述")
     private String symptomDesc;
+
+    // ==========================================
+    //  新增辅助字段 (用于列表展示姓名，而非ID)
+    // ==========================================
+    
+    /** 患者姓名 (关联查询用) */
+    @Excel(name = "患者姓名")
+    private String patientName;
+
+    /** 医生姓名 (关联查询用) */
+    @Excel(name = "医生姓名")
+    private String doctorName;
+
+    public void setPatientName(String patientName) {
+        this.patientName = patientName;
+    }
+
+    public String getPatientName() {
+        return patientName;
+    }
+
+    public void setDoctorName(String doctorName) {
+        this.doctorName = doctorName;
+    }
+
+    public String getDoctorName() {
+        return doctorName;
+    }
+
+    // ==========================================
+    //  原有 Getter / Setter
+    // ==========================================
 
     public void setAppointmentId(Long appointmentId) 
     {
@@ -177,7 +208,9 @@ public class HospitalAppointment extends BaseEntity
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
             .append("appointmentId", getAppointmentId())
             .append("patientId", getPatientId())
+            .append("patientName", getPatientName()) // 打印患者姓名
             .append("doctorId", getDoctorId())
+            .append("doctorName", getDoctorName())   // 打印医生姓名
             .append("scheduleId", getScheduleId())
             .append("visitDate", getVisitDate())
             .append("shiftType", getShiftType())

@@ -42,3 +42,12 @@ export function delAppointmentKeshe(appointmentId) {
     method: 'delete'
   })
 }
+
+// 【新增】患者在线预约
+export function bookAppointment(data) {
+  return request({
+    url: '/system/appointmentKeshe/book',
+    method: 'post',
+    data: data
+  })
+}

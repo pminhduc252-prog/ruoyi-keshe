@@ -21,31 +21,60 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="updateBy"    column="update_by"    />
         <result property="updateTime"    column="update_time"    />
         <result property="remark"    column="remark"    />
+        
+        <result property="patientName"    column="patient_name"    />
+        <result property="doctorName"     column="doctor_name"     />
     </resultMap>
 
     <sql id="selectHospitalAppointmentVo">
-        select appointment_id, patient_id, doctor_id, schedule_id, visit_date, shift_type, queue_number, status, visit_status, reg_fee, symptom_desc, create_by, create_time, update_by, update_time, remark from hospital_appointment
+        SELECT 
+            a.appointment_id, 
+            a.patient_id, 
+            a.doctor_id, 
+            a.schedule_id, 
+            a.visit_date, 
+            a.shift_type, 
+            a.queue_number, 
+            a.status, 
+            a.visit_status, 
+            a.reg_fee, 
+            a.symptom_desc, 
+            a.create_by, 
+            a.create_time, 
+            a.update_by, 
+            a.update_time, 
+            a.remark,
+            /* 【修正点1】如果您的患者名字段不叫 name，请在这里修改 (例如 p.patient_name) */
+            p.name AS patient_name,
+            d.doc_name AS doctor_name
+        FROM hospital_appointment a
+        /* 【修正点2】这里原来是 p.id，现在改为 p.patient_id */
+        LEFT JOIN hospital_patient p ON a.patient_id = p.patient_id
+        LEFT JOIN hospital_doctor d ON a.doctor_id = d.doctor_id
     </sql>
 
     <select id="selectHospitalAppointmentList" parameterType="HospitalAppointment" resultMap="HospitalAppointmentResult">
         <include refid="selectHospitalAppointmentVo"/>
         <where>  
-            <if test="patientId != null "> and patient_id = #{patientId}</if>
-            <if test="doctorId != null "> and doctor_id = #{doctorId}</if>
-            <if test="scheduleId != null "> and schedule_id = #{scheduleId}</if>
-            <if test="visitDate != null "> and visit_date = #{visitDate}</if>
-            <if test="shiftType != null  and shiftType != ''"> and shift_type = #{shiftType}</if>
-            <if test="queueNumber != null "> and queue_number = #{queueNumber}</if>
-            <if test="status != null  and status != ''"> and status = #{status}</if>
-            <if test="visitStatus != null  and visitStatus != ''"> and visit_status = #{visitStatus}</if>
-            <if test="regFee != null "> and reg_fee = #{regFee}</if>
-            <if test="symptomDesc != null  and symptomDesc != ''"> and symptom_desc = #{symptomDesc}</if>
+            <if test="appointmentId != null "> and a.appointment_id = #{appointmentId}</if>
+            <if test="patientId != null "> and a.patient_id = #{patientId}</if>
+            <if test="doctorId != null "> and a.doctor_id = #{doctorId}</if>
+            <if test="scheduleId != null "> and a.schedule_id = #{scheduleId}</if>
+            <if test="visitDate != null "> and a.visit_date = #{visitDate}</if>
+            <if test="shiftType != null  and shiftType != ''"> and a.shift_type = #{shiftType}</if>
+            <if test="queueNumber != null "> and a.queue_number = #{queueNumber}</if>
+            <if test="status != null  and status != ''"> and a.status = #{status}</if>
+            <if test="visitStatus != null  and visitStatus != ''"> and a.visit_status = #{visitStatus}</if>
+            <if test="regFee != null "> and a.reg_fee = #{regFee}</if>
+            <if test="symptomDesc != null  and symptomDesc != ''"> and a.symptom_desc = #{symptomDesc}</if>
+            <if test="createBy != null and createBy != ''"> and a.create_by = #{createBy}</if>
         </where>
+        ORDER BY a.create_time DESC
     </select>
     
     <select id="selectHospitalAppointmentByAppointmentId" parameterType="Long" resultMap="HospitalAppointmentResult">
         <include refid="selectHospitalAppointmentVo"/>
-        where appointment_id = #{appointmentId}
+        where a.appointment_id = #{appointmentId}
     </select>
 
     <insert id="insertHospitalAppointment" parameterType="HospitalAppointment" useGeneratedKeys="true" keyProperty="appointmentId">

@@ -9,6 +9,22 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
+      <el-form-item label="科室名称" prop="doctorDeptName">
+        <el-input
+          v-model="queryParams.doctorDeptName"
+          placeholder="请输入科室名称"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="医生职称" prop="doctorJobTitle">
+        <el-input
+          v-model="queryParams.doctorJobTitle"
+          placeholder="请输入职称"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
       
       <el-form-item label="出诊日期" prop="workDate">
         <el-date-picker clearable
@@ -81,37 +97,53 @@
 
     <el-table v-loading="loading" :data="schedulingKesheList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="排班ID" align="center" prop="scheduleId" />
+      <el-table-column label="排班ID" align="center" prop="scheduleId" width="80" />
       
-      <el-table-column label="医生信息" align="center" prop="doctorName">
-        <template slot-scope="scope">
-          <div>{{ scope.row.doctorName }}</div>
-          <div style="font-size: 12px; color: #999;">(ID: {{ scope.row.doctorId }})</div>
-        </template>
+      <el-table-column label="科室" align="center" prop="doctorDeptName" width="120" />
+      
+      <el-table-column label="医生" align="center" prop="doctorName">
+         <template slot-scope="scope">
+            <span style="font-weight: bold;">{{ scope.row.doctorName }}</span>
+         </template>
+      </el-table-column>
+      
+      <el-table-column label="职称" align="center" prop="doctorJobTitle" width="120">
+         <template slot-scope="scope">
+            <el-tag size="small" type="info">{{ scope.row.doctorJobTitle }}</el-tag>
+         </template>
       </el-table-column>
 
-      <el-table-column label="出诊日期" align="center" prop="workDate" width="180">
+      <el-table-column label="出诊日期" align="center" prop="workDate" width="150">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.workDate, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="时段" align="center" prop="shiftType">
+      
+      <el-table-column label="时段" align="center" prop="shiftType" width="80">
         <template slot-scope="scope">
-          <span v-if="scope.row.shiftType == '1'">上午</span>
-          <span v-else-if="scope.row.shiftType == '2'">下午</span>
-          <span v-else-if="scope.row.shiftType == '3'">晚班</span>
+          <el-tag v-if="scope.row.shiftType == '1'" effect="dark">上午</el-tag>
+          <el-tag v-else-if="scope.row.shiftType == '2'" type="warning" effect="dark">下午</el-tag>
+          <el-tag v-else-if="scope.row.shiftType == '3'" type="danger" effect="dark">晚班</el-tag>
           <span v-else>{{ scope.row.shiftType }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="总号源数量" align="center" prop="totalQuota" />
-      <el-table-column label="剩余号源数量" align="center" prop="availableQuota" />
-      <el-table-column label="排班状态" align="center" prop="status">
+      
+      <el-table-column label="号源" align="center">
+          <template slot-scope="scope">
+              <span :style="scope.row.availableQuota > 0 ? 'color:green' : 'color:red'">
+                {{ scope.row.availableQuota }}
+              </span> 
+              / {{ scope.row.totalQuota }}
+          </template>
+      </el-table-column>
+      
+      <el-table-column label="状态" align="center" prop="status" width="80">
         <template slot-scope="scope">
           <el-tag v-if="scope.row.status == '0'" type="success">正常</el-tag>
           <el-tag v-else type="danger">停诊</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="备注" align="center" prop="remark" />
+      
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -128,13 +160,22 @@
             @click="handleDelete(scope.row)"
             v-hasPermi="['system:schedulingKeshe:remove']"
           >删除</el-button>
+          
           <el-button
+            v-if="scope.row.availableQuota > 0"
             size="mini"
             type="text"
             icon="el-icon-check"
             @click="handleBook(scope.row)"
             v-hasRole="['patient']"
           >预约</el-button>
+           <el-button
+            v-else
+            disabled
+            size="mini"
+            type="text"
+            v-hasRole="['patient']"
+          >已满</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -189,7 +230,7 @@
 
 <script>
 import { listSchedulingKeshe, getSchedulingKeshe, delSchedulingKeshe, addSchedulingKeshe, updateSchedulingKeshe } from "@/api/system/schedulingKeshe"
-import { bookAppointment } from "@/api/system/appointmentKeshe" // 引入预约接口
+import { bookAppointment } from "@/api/system/appointmentKeshe"
 
 export default {
   name: "SchedulingKeshe",
@@ -218,7 +259,9 @@ export default {
         pageNum: 1,
         pageSize: 10,
         doctorId: null,
-        doctorName: null, // 增加按姓名搜索参数
+        doctorName: null,
+        doctorDeptName: null,
+        doctorJobTitle: null,
         workDate: null,
         shiftType: null,
         totalQuota: null,
@@ -351,18 +394,28 @@ export default {
         ...this.queryParams
       }, `schedulingKeshe_${new Date().getTime()}.xlsx`)
     },
-    /** 患者点击预约 */
+    /** 患者点击预约 (核心修复) */
     handleBook(row) {
-      this.$modal.confirm('确认要预约 "' + (row.doctorName || '该医生') + '" 的号吗？').then(function() {
-        // 传排班ID (在 HospitalAppointment 实体类里，可能需要用 id 或者 scheduleId 字段接收，这里假设用 id)
-        // 注意：后端 Controller 如果接收的是 HospitalAppointment 对象，你需要确认它怎么接收 scheduleId
-        // 这里为了简单，我们假设你的 book 接口接收一个对象，里面有 id 字段放排班ID
-        let data = { id: row.scheduleId }; 
+      // 1. 弹出输入框让患者填写病情
+      this.$prompt('请输入您的就诊需求或简要病情：', '预约确认', {
+        confirmButtonText: '确认预约',
+        cancelButtonText: '取消',
+        inputPattern: /\S/, // 简单校验，不能为空
+        inputErrorMessage: '病情描述不能为空'
+      }).then(({ value }) => {
+        // 2. 构造数据，注意 key 是 scheduleId
+        let data = { 
+          scheduleId: row.scheduleId, // 【重要】这里必须传 scheduleId
+          remark: value 
+        }; 
+        // 3. 调用后端接口
         return bookAppointment(data);
       }).then(() => {
         this.$modal.msgSuccess("预约成功！请在'我的挂号记录'中查看");
-        this.getList(); // 刷新列表，看到号源-1
-      }).catch(() => {});
+        this.getList(); // 刷新列表，实时看到号源减少
+      }).catch(() => {
+        // 取消或报错
+      });
     }
   }
 }

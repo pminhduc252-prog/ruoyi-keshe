@@ -4,6 +4,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -20,11 +21,12 @@ import com.ruoyi.system.domain.HospitalAppointment;
 import com.ruoyi.system.service.IHospitalAppointmentService;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.system.domain.HospitalPatient; // 引入患者实体
+import com.ruoyi.system.mapper.HospitalPatientMapper; // 引入患者Mapper
 
 /**
  * 挂号预约记录Controller
- * 
- * @author Shuhan
+ * * @author Shuhan
  * @date 2026-01-02
  */
 @RestController
@@ -34,6 +36,13 @@ public class HospitalAppointmentController extends BaseController
     @Autowired
     private IHospitalAppointmentService hospitalAppointmentService;
 
+    @Autowired
+    private com.ruoyi.system.service.IHospitalSchedulingService schedulingService;
+
+    // 【新增】注入患者Mapper，用于查询当前用户的档案
+    @Autowired
+    private HospitalPatientMapper hospitalPatientMapper;
+
     /**
      * 查询挂号预约记录列表
      */
@@ -42,6 +51,9 @@ public class HospitalAppointmentController extends BaseController
     public TableDataInfo list(HospitalAppointment hospitalAppointment)
     {
         startPage();
+        // 如果是患者角色，只能看自己的挂号记录
+        // 注意：这里最好改成用 patient_id 查，或者在 SQL 里关联 user_id
+        // 简单做法：这里先不做强制过滤，或者你可以把 getUserId() 传进去
         List<HospitalAppointment> list = hospitalAppointmentService.selectHospitalAppointmentList(hospitalAppointment);
         return getDataTable(list);
     }
@@ -78,6 +90,72 @@ public class HospitalAppointmentController extends BaseController
     public AjaxResult add(@RequestBody HospitalAppointment hospitalAppointment)
     {
         return toAjax(hospitalAppointmentService.insertHospitalAppointment(hospitalAppointment));
+    }
+
+    /**
+     * 【核心】患者端在线预约
+     */
+    @PreAuthorize("@ss.hasRole('patient')")
+    @Log(title = "在线预约", businessType = BusinessType.INSERT)
+    @PostMapping("/book")
+    @Transactional
+    public AjaxResult book(@RequestBody HospitalAppointment appointment)
+    {
+        // 1. 获取前端传来的排班ID
+        Long scheduleId = appointment.getScheduleId();
+        if (scheduleId == null) {
+            return error("预约失败：未选择排班");
+        }
+
+        // 2. 【核心修改】查询当前登录用户绑定的患者档案
+        Long currentUserId = getUserId();
+        HospitalPatient patient = hospitalPatientMapper.selectHospitalPatientByUserId(currentUserId);
+
+        if (patient == null) {
+            return error("预约失败：您尚未完善个人就诊档案！请先前往'患者信息管理'添加您的信息。");
+        }
+
+        // 3. 校验排班
+        com.ruoyi.system.domain.HospitalScheduling schedule = schedulingService.selectHospitalSchedulingByScheduleId(scheduleId);
+        if (schedule == null) {
+            return error("该排班不存在");
+        }
+        if ("1".equals(schedule.getStatus())) {
+            return error("该排班已停诊");
+        }
+        if (schedule.getAvailableQuota() <= 0) {
+            return error("手慢了，该时段号源已抢完！");
+        }
+
+        // 4. 扣减库存
+        schedule.setAvailableQuota(schedule.getAvailableQuota() - 1);
+        schedulingService.updateHospitalScheduling(schedule);
+
+        // 5. 组装数据
+        appointment.setAppointmentId(null);
+        
+        // 【重点】这里不再填 userId，而是填真实的 patient_id
+        appointment.setPatientId(patient.getPatientId()); 
+        
+        appointment.setDoctorId(schedule.getDoctorId());
+        appointment.setVisitDate(schedule.getWorkDate()); 
+        appointment.setStatus("0"); // 0=待就诊
+        
+        if (appointment.getRemark() != null) {
+            appointment.setSymptomDesc(appointment.getRemark());
+        }
+
+        int rows = hospitalAppointmentService.insertHospitalAppointment(appointment);
+
+        // 6. 模拟短信
+        if (rows > 0) {
+            System.out.println("============== 短信通知 ==============");
+            System.out.println("发送给：" + patient.getName() + " (手机:" + patient.getPhone() + ")");
+            System.out.println("内容：预约成功！医生：" + schedule.getDoctorName() + "，时间：" + schedule.getWorkDate());
+            System.out.println("======================================");
+        }
+
+        return toAjax(rows);
     }
 
     /**
