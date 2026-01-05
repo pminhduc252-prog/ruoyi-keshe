@@ -58,4 +58,11 @@ public interface HospitalAppointmentMapper
      * @return 结果
      */
     public int deleteHospitalAppointmentByAppointmentIds(Long[] appointmentIds);
+
+    /**
+     * 获取指定排班当前最大的排队号
+     * @param scheduleId 排班ID
+     * @return 当前最大排队号（如果没有记录则返回0）
+     */
+    public int selectMaxQueueNumberByScheduleId(Long scheduleId);
 }

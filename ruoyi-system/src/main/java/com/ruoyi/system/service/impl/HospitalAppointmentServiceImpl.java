@@ -2,7 +2,6 @@ package com.ruoyi.system.service.impl;
 
 import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
-import com.ruoyi.common.utils.SecurityUtils; // 【新增】引入权限工具类
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.system.mapper.HospitalAppointmentMapper;
@@ -39,23 +38,8 @@ public class HospitalAppointmentServiceImpl implements IHospitalAppointmentServi
     @Override
     public List<HospitalAppointment> selectHospitalAppointmentList(HospitalAppointment hospitalAppointment)
     {
-        // 【修改】核心逻辑：实现“患者只能看自己的挂号单”
-        
-        // 1. 获取当前登录用户的ID
-        try {
-            Long userId = SecurityUtils.getUserId();
-            
-            // 2. 判断是否为管理员（ID=1通常是超级管理员）
-            // 如果不是管理员，说明是患者登录
-            if (!SecurityUtils.isAdmin(userId)) {
-                // 3. 强制设置过滤条件：create_by（创建者）必须等于当前登录账号
-                // 这样 MyBatis 在查询时就会生成 WHERE create_by = 'zhangsan'
-                hospitalAppointment.setCreateBy(SecurityUtils.getUsername());
-            }
-        } catch (Exception e) {
-            // 防止在非登录环境下（如定时任务）调用报错，一般可忽略或记录日志
-        }
-
+        // 注意：患者角色的数据过滤已在 Controller 层通过 patientId 完成
+        // Service 层不再进行额外的权限过滤，避免与 Controller 层的过滤逻辑冲突
         return hospitalAppointmentMapper.selectHospitalAppointmentList(hospitalAppointment);
     }
 

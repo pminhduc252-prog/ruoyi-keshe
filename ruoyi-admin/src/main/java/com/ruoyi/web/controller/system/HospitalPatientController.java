@@ -101,4 +101,29 @@ public class HospitalPatientController extends BaseController
     {
         return toAjax(hospitalPatientService.deleteHospitalPatientByPatientIds(patientIds));
     }
+
+    /**
+     * 患者端：完善个人档案
+     */
+    @PreAuthorize("@ss.hasRole('patient')") // 允许患者角色访问
+    @Log(title = "完善个人档案", businessType = BusinessType.INSERT)
+    @PostMapping("/addProfile")
+    public AjaxResult addProfile(@RequestBody HospitalPatient hospitalPatient)
+    {
+        // 1. 强制绑定当前登录用户的 ID，防止帮别人填
+        hospitalPatient.setUserId(getUserId());
+        
+        // 2. 如果没有 patient_id，说明是新增
+        if (hospitalPatient.getPatientId() == null) {
+            // 校验是否已经存在档案，防止重复添加
+            HospitalPatient exist = hospitalPatientService.selectHospitalPatientByUserId(getUserId());
+            if (exist != null) {
+                return error("您已存在就诊档案，请勿重复添加！");
+            }
+            return toAjax(hospitalPatientService.insertHospitalPatient(hospitalPatient));
+        } 
+        
+        // 3. 如果有ID，也可以视为修改 (可选)
+        return toAjax(hospitalPatientService.updateHospitalPatient(hospitalPatient));
+    }
 }

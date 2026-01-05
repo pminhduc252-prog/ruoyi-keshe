@@ -42,3 +42,12 @@ export function delPatientKeshe(patientId) {
     method: 'delete'
   })
 }
+
+// 【新增】患者端完善个人档案
+export function addPatientProfile(data) {
+  return request({
+    url: '/system/patientKeshe/addProfile',
+    method: 'post',
+    data: data
+  })
+}

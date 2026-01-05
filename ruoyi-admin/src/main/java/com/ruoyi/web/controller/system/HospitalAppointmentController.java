@@ -50,10 +50,30 @@ public class HospitalAppointmentController extends BaseController
     @GetMapping("/list")
     public TableDataInfo list(HospitalAppointment hospitalAppointment)
     {
+        // 1. 获取当前用户ID
+        Long userId = getUserId();
+
+        // 2. 权限判断逻辑优化
+        // 判断是否为超级管理员 (ID=1) 或者拥有 'admin' 角色
+        boolean isAdmin = com.ruoyi.common.utils.SecurityUtils.isAdmin(userId) 
+                       || com.ruoyi.common.utils.SecurityUtils.hasRole("admin");
+
+        // 只有 "非管理员" 且 "拥有患者角色" 时，才强制筛选
+        if (!isAdmin && com.ruoyi.common.utils.SecurityUtils.hasRole("patient")) {
+            // 查出该用户的档案
+            HospitalPatient patient = hospitalPatientMapper.selectHospitalPatientByUserId(userId);
+            
+            if (patient != null) {
+                // 只查询属于这个 patientId 的记录
+                hospitalAppointment.setPatientId(patient.getPatientId());
+            } else {
+                // 是患者但没档案，直接返回空
+                return getDataTable(new java.util.ArrayList<>());
+            }
+        }
+
+        // 3. 执行查询 (管理员查所有，普通患者查自己)
         startPage();
-        // 如果是患者角色，只能看自己的挂号记录
-        // 注意：这里最好改成用 patient_id 查，或者在 SQL 里关联 user_id
-        // 简单做法：这里先不做强制过滤，或者你可以把 getUserId() 传进去
         List<HospitalAppointment> list = hospitalAppointmentService.selectHospitalAppointmentList(hospitalAppointment);
         return getDataTable(list);
     }

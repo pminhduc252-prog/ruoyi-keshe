@@ -10,41 +10,19 @@
         />
       </el-form-item>
       <el-form-item label="性别" prop="gender">
-        <el-input
-          v-model="queryParams.gender"
-          placeholder="请输入性别"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="年龄" prop="age">
-        <el-input
-          v-model="queryParams.age"
-          placeholder="请输入年龄"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="身份证号(需加密存储)" prop="idCard">
-        <el-input
-          v-model="queryParams.idCard"
-          placeholder="请输入身份证号(需加密存储)"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
+        <el-select v-model="queryParams.gender" placeholder="请选择性别" clearable>
+          <el-option
+            v-for="dict in dict.type.sys_user_sex"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="联系电话" prop="phone">
         <el-input
           v-model="queryParams.phone"
           placeholder="请输入联系电话"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
-      <el-form-item label="家庭住址" prop="address">
-        <el-input
-          v-model="queryParams.address"
-          placeholder="请输入家庭住址"
           clearable
           @keyup.enter.native="handleQuery"
         />
@@ -105,13 +83,15 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="患者ID" align="center" prop="patientId" />
       <el-table-column label="患者姓名" align="center" prop="name" />
-      <el-table-column label="性别" align="center" prop="gender" />
+      <el-table-column label="性别" align="center" prop="gender">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_user_sex" :value="scope.row.gender"/>
+        </template>
+      </el-table-column>
       <el-table-column label="年龄" align="center" prop="age" />
-      <el-table-column label="身份证号(需加密存储)" align="center" prop="idCard" />
+      <el-table-column label="身份证号" align="center" prop="idCard" />
       <el-table-column label="联系电话" align="center" prop="phone" />
       <el-table-column label="家庭住址" align="center" prop="address" />
-      <el-table-column label="状态" align="center" prop="status" />
-      <el-table-column label="备注" align="center" prop="remark" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -140,29 +120,32 @@
       @pagination="getList"
     />
 
-    <!-- 添加或修改患者信息对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="患者姓名" prop="name">
           <el-input v-model="form.name" placeholder="请输入患者姓名" />
         </el-form-item>
         <el-form-item label="性别" prop="gender">
-          <el-input v-model="form.gender" placeholder="请输入性别" />
+          <el-select v-model="form.gender" placeholder="请选择性别">
+            <el-option
+              v-for="dict in dict.type.sys_user_sex"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="年龄" prop="age">
           <el-input v-model="form.age" placeholder="请输入年龄" />
         </el-form-item>
-        <el-form-item label="身份证号(需加密存储)" prop="idCard">
-          <el-input v-model="form.idCard" placeholder="请输入身份证号(需加密存储)" />
+        <el-form-item label="身份证号" prop="idCard">
+          <el-input v-model="form.idCard" placeholder="请输入身份证号" />
         </el-form-item>
         <el-form-item label="联系电话" prop="phone">
           <el-input v-model="form.phone" placeholder="请输入联系电话" />
         </el-form-item>
         <el-form-item label="家庭住址" prop="address">
           <el-input v-model="form.address" placeholder="请输入家庭住址" />
-        </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -175,9 +158,12 @@
 
 <script>
 import { listPatientKeshe, getPatientKeshe, delPatientKeshe, addPatientKeshe, updatePatientKeshe } from "@/api/system/patientKeshe"
+// 【新增】引入 mapGetters 辅助函数
+import { mapGetters } from 'vuex'
 
 export default {
   name: "PatientKeshe",
+  dicts: ['sys_user_sex'],
   data() {
     return {
       // 遮罩层
@@ -218,10 +204,19 @@ export default {
           { required: true, message: "患者姓名不能为空", trigger: "blur" }
         ],
         idCard: [
-          { required: true, message: "身份证号(需加密存储)不能为空", trigger: "blur" }
+          { required: true, message: "身份证号不能为空", trigger: "blur" }
+        ],
+        phone: [
+          { required: true, message: "联系电话不能为空", trigger: "blur" }
         ],
       }
     }
+  },
+  // 【新增】计算属性，获取当前用户ID
+  computed: {
+    ...mapGetters([
+      'userId'
+    ])
   },
   created() {
     this.getList()
@@ -245,6 +240,7 @@ export default {
     reset() {
       this.form = {
         patientId: null,
+        userId: null,
         name: null,
         gender: null,
         age: null,
@@ -296,6 +292,11 @@ export default {
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
+          // 【核心修改】如果是新增操作，自动填入当前登录用户的ID
+          if (this.form.patientId == null) {
+             this.form.userId = this.userId; 
+          }
+          
           if (this.form.patientId != null) {
             updatePatientKeshe(this.form).then(response => {
               this.$modal.msgSuccess("修改成功")

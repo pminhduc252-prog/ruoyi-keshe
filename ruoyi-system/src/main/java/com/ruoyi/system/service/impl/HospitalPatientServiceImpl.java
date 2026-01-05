@@ -123,4 +123,16 @@ public class HospitalPatientServiceImpl implements IHospitalPatientService
     {
         return hospitalPatientMapper.deleteHospitalPatientByPatientId(patientId);
     }
+
+    /**
+     * 根据系统用户ID查询患者信息
+     * 
+     * @param userId 系统用户ID
+     * @return 患者信息
+     */
+    @Override
+    public HospitalPatient selectHospitalPatientByUserId(Long userId)
+    {
+        return hospitalPatientMapper.selectHospitalPatientByUserId(userId);
+    }
 }

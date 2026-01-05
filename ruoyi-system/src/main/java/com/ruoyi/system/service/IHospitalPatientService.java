@@ -20,6 +20,14 @@ public interface IHospitalPatientService
     public HospitalPatient selectHospitalPatientByPatientId(Long patientId);
 
     /**
+     * 根据系统用户ID查询患者信息
+     * 
+     * @param userId 系统用户ID
+     * @return 患者信息
+     */
+    public HospitalPatient selectHospitalPatientByUserId(Long userId);
+
+    /**
      * 查询患者信息列表
      * 
      * @param hospitalPatient 患者信息

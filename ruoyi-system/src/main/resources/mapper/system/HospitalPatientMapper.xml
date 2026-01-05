@@ -6,6 +6,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     
     <resultMap type="HospitalPatient" id="HospitalPatientResult">
         <result property="patientId"    column="patient_id"    />
+        <result property="userId"       column="user_id"       />
         <result property="name"    column="name"    />
         <result property="gender"    column="gender"    />
         <result property="age"    column="age"    />
@@ -21,7 +22,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectHospitalPatientVo">
-        select patient_id, name, gender, age, id_card, phone, address, status, create_by, create_time, update_by, update_time, remark from hospital_patient
+        select patient_id, user_id, name, gender, age, id_card, phone, address, status, create_by, create_time, update_by, update_time, remark from hospital_patient
     </sql>
 
     <select id="selectHospitalPatientList" parameterType="HospitalPatient" resultMap="HospitalPatientResult">
@@ -34,6 +35,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="phone != null  and phone != ''"> and phone = #{phone}</if>
             <if test="address != null  and address != ''"> and address = #{address}</if>
             <if test="status != null  and status != ''"> and status = #{status}</if>
+            <if test="userId != null "> and user_id = #{userId}</if>
         </where>
     </select>
     
@@ -42,9 +44,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where patient_id = #{patientId}
     </select>
 
+    <select id="selectHospitalPatientByUserId" parameterType="Long" resultMap="HospitalPatientResult">
+        <include refid="selectHospitalPatientVo"/>
+        where user_id = #{userId}
+    </select>
+
     <insert id="insertHospitalPatient" parameterType="HospitalPatient" useGeneratedKeys="true" keyProperty="patientId">
         insert into hospital_patient
         <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
             <if test="name != null and name != ''">name,</if>
             <if test="gender != null">gender,</if>
             <if test="age != null">age,</if>
@@ -59,6 +67,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="remark != null">remark,</if>
          </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
             <if test="name != null and name != ''">#{name},</if>
             <if test="gender != null">#{gender},</if>
             <if test="age != null">#{age},</if>
@@ -77,6 +86,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <update id="updateHospitalPatient" parameterType="HospitalPatient">
         update hospital_patient
         <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null">user_id = #{userId},</if>
             <if test="name != null and name != ''">name = #{name},</if>
             <if test="gender != null">gender = #{gender},</if>
             <if test="age != null">age = #{age},</if>

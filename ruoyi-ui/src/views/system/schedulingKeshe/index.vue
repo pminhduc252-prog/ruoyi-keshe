@@ -225,12 +225,48 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+    <el-dialog title="完善就诊信息" :visible.sync="patientOpen" width="500px" append-to-body :close-on-click-modal="false">
+      <div style="margin-bottom: 20px; color: #E6A23C;">
+        <i class="el-icon-warning"></i> 初次预约请先填写真实就诊信息，提交后将自动为您预约。
+      </div>
+      <el-form ref="patientForm" :model="patientForm" :rules="patientRules" label-width="80px">
+        <el-form-item label="真实姓名" prop="name">
+          <el-input v-model="patientForm.name" placeholder="请输入您的真实姓名" />
+        </el-form-item>
+        <el-form-item label="身份证号" prop="idCard">
+          <el-input v-model="patientForm.idCard" placeholder="请输入身份证号" />
+        </el-form-item>
+        <el-form-item label="手机号码" prop="phone">
+          <el-input v-model="patientForm.phone" placeholder="请输入手机号码" />
+        </el-form-item>
+        <el-form-item label="性别" prop="gender">
+          <el-select v-model="patientForm.gender" placeholder="请选择性别">
+            <el-option label="男" value="0" />
+            <el-option label="女" value="1" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="年龄" prop="age">
+          <el-input-number v-model="patientForm.age" :min="0" :max="120" />
+        </el-form-item>
+        <el-form-item label="家庭住址" prop="address">
+          <el-input v-model="patientForm.address" placeholder="请输入家庭住址" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitPatientForm">保存并继续预约</el-button>
+        <el-button @click="patientOpen = false">取 消</el-button>
+      </div>
+    </el-dialog>
+
   </div>
 </template>
 
 <script>
 import { listSchedulingKeshe, getSchedulingKeshe, delSchedulingKeshe, addSchedulingKeshe, updateSchedulingKeshe } from "@/api/system/schedulingKeshe"
 import { bookAppointment } from "@/api/system/appointmentKeshe"
+import { addPatientProfile } from "@/api/system/patientKeshe" // 【修复】使用 addPatientProfile
+import { mapGetters } from 'vuex' 
 
 export default {
   name: "SchedulingKeshe",
@@ -254,6 +290,13 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      
+      // 【新增】患者完善信息弹窗控制
+      patientOpen: false,
+      // 【新增】暂存当前要预约的排班信息
+      pendingBookingRow: null,
+      pendingBookingRemark: null,
+
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -268,9 +311,13 @@ export default {
         availableQuota: null,
         status: null,
       },
-      // 表单参数
+      // 表单参数 (排班)
       form: {},
-      // 表单校验
+      
+      // 【新增】表单参数 (患者)
+      patientForm: {},
+      
+      // 表单校验 (排班)
       rules: {
         doctorId: [
           { required: true, message: "医生ID不能为空", trigger: "blur" }
@@ -287,8 +334,17 @@ export default {
         availableQuota: [
           { required: true, message: "剩余号源数量不能为空", trigger: "blur" }
         ],
+      },
+      // 【新增】表单校验 (患者)
+      patientRules: {
+        name: [{ required: true, message: "真实姓名不能为空", trigger: "blur" }],
+        idCard: [{ required: true, message: "身份证号不能为空", trigger: "blur" }],
+        phone: [{ required: true, message: "手机号码不能为空", trigger: "blur" }]
       }
     }
+  },
+  computed: {
+    ...mapGetters(['userId'])
   },
   created() {
     this.getList()
@@ -326,6 +382,19 @@ export default {
       }
       this.resetForm("form")
     },
+    // 【新增】重置患者表单
+    resetPatientForm() {
+      this.patientForm = {
+        name: null,
+        idCard: null,
+        phone: null,
+        gender: "0",
+        age: null,
+        address: null,
+        userId: null
+      }
+      this.resetForm("patientForm");
+    },
     /** 搜索按钮操作 */
     handleQuery() {
       this.queryParams.pageNum = 1
@@ -358,7 +427,7 @@ export default {
         this.title = "修改医生排班"
       })
     },
-    /** 提交按钮 */
+    /** 提交按钮 (排班) */
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
@@ -394,27 +463,86 @@ export default {
         ...this.queryParams
       }, `schedulingKeshe_${new Date().getTime()}.xlsx`)
     },
-    /** 患者点击预约 (核心修复) */
+    
+    /** 患者点击预约 */
     handleBook(row) {
-      // 1. 弹出输入框让患者填写病情
+      // 1. 输入病情
       this.$prompt('请输入您的就诊需求或简要病情：', '预约确认', {
         confirmButtonText: '确认预约',
         cancelButtonText: '取消',
-        inputPattern: /\S/, // 简单校验，不能为空
+        inputPattern: /\S/,
         inputErrorMessage: '病情描述不能为空'
       }).then(({ value }) => {
-        // 2. 构造数据，注意 key 是 scheduleId
+        
+        // 暂存数据，以便后续自动重试
+        this.pendingBookingRow = row;
+        this.pendingBookingRemark = value;
+        
+        // 执行预约
+        this.doBookRequest(row.scheduleId, value);
+        
+      }).catch(() => {});
+    },
+
+    /** 执行真实的预约请求 */
+    doBookRequest(scheduleId, remark) {
         let data = { 
-          scheduleId: row.scheduleId, // 【重要】这里必须传 scheduleId
-          remark: value 
+          scheduleId: scheduleId, 
+          remark: remark 
         }; 
-        // 3. 调用后端接口
-        return bookAppointment(data);
-      }).then(() => {
-        this.$modal.msgSuccess("预约成功！请在'我的挂号记录'中查看");
-        this.getList(); // 刷新列表，实时看到号源减少
-      }).catch(() => {
-        // 取消或报错
+        bookAppointment(data).then(response => {
+            this.$modal.msgSuccess("预约成功！请在'我的挂号记录'中查看");
+            this.getList(); 
+            // 清空暂存
+            this.pendingBookingRow = null;
+            this.pendingBookingRemark = null;
+        }).catch((err) => {
+            // 【关键修复】兼容多种报错格式，确保能捕捉到错误信息
+            let errorMsg = "";
+            if (err && err.msg) {
+                errorMsg = err.msg;
+            } else if (err && err.message) {
+                errorMsg = err.message;
+            } else {
+                errorMsg = String(err);
+            }
+
+            // 只要报错信息里包含这句话，就弹出填写框
+            if (errorMsg.indexOf('尚未完善个人就诊档案') > -1) {
+                // 1. 提示用户
+                this.$modal.msgWarning("首次预约，请先完善您的就诊档案");
+                
+                // 2. 重置表单
+                this.resetPatientForm();
+                
+                // 3. 【核心】强制打开弹窗
+                this.patientOpen = true; 
+            }
+        });
+    },
+
+    /** 提交患者信息表单 */
+    submitPatientForm() {
+      this.$refs["patientForm"].validate(valid => {
+        if (valid) {
+          // 自动填入当前登录用户的ID
+          this.patientForm.userId = this.userId;
+          
+          // 【核心修改】调用 addPatientProfile 接口 (允许患者调用)
+          addPatientProfile(this.patientForm).then(response => {
+            this.$modal.msgSuccess("档案建立成功");
+            this.patientOpen = false;
+            
+            // 【自动重试预约】
+            if (this.pendingBookingRow && this.pendingBookingRemark) {
+                this.$modal.loading("正在为您重试预约...");
+                setTimeout(() => {
+                    this.$modal.closeLoading();
+                    this.doBookRequest(this.pendingBookingRow.scheduleId, this.pendingBookingRemark);
+                }, 1000); // 稍微延迟一下，确保数据库事务完成
+            }
+          });
+        }
       });
     }
   }

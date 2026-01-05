@@ -23,9 +23,17 @@ public class HospitalScheduling extends BaseEntity
     @Excel(name = "医生ID")
     private Long doctorId;
 
-    /** 医生姓名 (新增字段，用于展示) */
+    /** 医生姓名 */
     @Excel(name = "医生姓名")
     private String doctorName;
+
+    /** 医生职称 */
+    @Excel(name = "医生职称")
+    private String doctorJobTitle;
+
+    /** 所属科室  */
+    @Excel(name = "所属科室")
+    private String doctorDeptName;
 
     /** 出诊日期 */
     @JsonFormat(pattern = "yyyy-MM-dd")
@@ -76,6 +84,26 @@ public class HospitalScheduling extends BaseEntity
     public String getDoctorName() 
     {
         return doctorName;
+    }
+
+    public void setDoctorJobTitle(String doctorJobTitle) 
+    {
+        this.doctorJobTitle = doctorJobTitle;
+    }
+
+    public String getDoctorJobTitle() 
+    {
+        return doctorJobTitle;
+    }
+
+    public void setDoctorDeptName(String doctorDeptName) 
+    {
+        this.doctorDeptName = doctorDeptName;
+    }
+
+    public String getDoctorDeptName() 
+    {
+        return doctorDeptName;
     }
 
     public void setWorkDate(Date workDate) 
@@ -134,6 +162,8 @@ public class HospitalScheduling extends BaseEntity
             .append("scheduleId", getScheduleId())
             .append("doctorId", getDoctorId())
             .append("doctorName", getDoctorName())
+            .append("doctorJobTitle", getDoctorJobTitle())
+            .append("doctorDeptName", getDoctorDeptName())
             .append("workDate", getWorkDate())
             .append("shiftType", getShiftType())
             .append("totalQuota", getTotalQuota())

@@ -44,11 +44,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             a.update_by, 
             a.update_time, 
             a.remark,
-            /* 【修正点1】如果您的患者名字段不叫 name，请在这里修改 (例如 p.patient_name) */
             p.name AS patient_name,
             d.doc_name AS doctor_name
         FROM hospital_appointment a
-        /* 【修正点2】这里原来是 p.id，现在改为 p.patient_id */
         LEFT JOIN hospital_patient p ON a.patient_id = p.patient_id
         LEFT JOIN hospital_doctor d ON a.doctor_id = d.doctor_id
     </sql>
@@ -75,6 +73,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectHospitalAppointmentByAppointmentId" parameterType="Long" resultMap="HospitalAppointmentResult">
         <include refid="selectHospitalAppointmentVo"/>
         where a.appointment_id = #{appointmentId}
+    </select>
+
+    <select id="selectMaxQueueNumberByScheduleId" parameterType="Long" resultType="Integer">
+        select ifnull(max(queue_number), 0) from hospital_appointment where schedule_id = #{scheduleId}
     </select>
 
     <insert id="insertHospitalAppointment" parameterType="HospitalAppointment" useGeneratedKeys="true" keyProperty="appointmentId">

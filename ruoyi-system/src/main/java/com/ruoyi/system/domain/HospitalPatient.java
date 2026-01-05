@@ -7,8 +7,7 @@ import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
  * 患者信息对象 hospital_patient
- * 
- * @author Shuhan
+ * * @author Shuhan
  * @date 2025-12-31
  */
 public class HospitalPatient extends BaseEntity
@@ -17,6 +16,9 @@ public class HospitalPatient extends BaseEntity
 
     /** 患者ID */
     private Long patientId;
+
+    /** 关联的系统用户ID */
+    private Long userId;
 
     /** 患者姓名 */
     @Excel(name = "患者姓名")
@@ -42,8 +44,8 @@ public class HospitalPatient extends BaseEntity
     @Excel(name = "家庭住址")
     private String address;
 
-    /** 状态（0正常 1禁用） */
-    @Excel(name = "状态", readConverterExp = "0=正常,1=禁用")
+    /** 状态（0正常 1停用） */
+    @Excel(name = "状态", readConverterExp = "0=正常,1=停用")
     private String status;
 
     public void setPatientId(Long patientId) 
@@ -54,6 +56,16 @@ public class HospitalPatient extends BaseEntity
     public Long getPatientId() 
     {
         return patientId;
+    }
+
+    public void setUserId(Long userId) 
+    {
+        this.userId = userId;
+    }
+
+    public Long getUserId() 
+    {
+        return userId;
     }
 
     public void setName(String name) 
@@ -130,6 +142,7 @@ public class HospitalPatient extends BaseEntity
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
             .append("patientId", getPatientId())
+            .append("userId", getUserId())
             .append("name", getName())
             .append("gender", getGender())
             .append("age", getAge())
